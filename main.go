@@ -15,19 +15,28 @@ import (
 
 type SRBody struct {
 	Name string `json:"name"`
+	Bot  bool   `json:"bot"`
 }
 
 func main() {
-	client := twitch.NewAnonymousClient()
 	lg := log.Default()
 	lg.SetPrefix("DEBUG ")
 	if err := godotenv.Load(); err != nil {
 		log.Println(".env missing")
 	}
 
-	channel := os.Getenv("CHANNEL")
+	channel := os.Getenv("CHANNEL_NAME")
 	if len(channel) == 0 {
 		lg.Panicln("channel missing")
+	}
+	username := os.Getenv("BOT_USERNAME")
+	token := os.Getenv("OAUTH_TOKEN")
+
+	var client *twitch.Client
+	if len(username) == 0 || len(token) == 0 {
+		client = twitch.NewAnonymousClient()
+	} else {
+		client = twitch.NewClient(username, token)
 	}
 
 	client.Join(channel)
@@ -38,7 +47,7 @@ func main() {
 		lg.Println("reconnected")
 	})
 	client.OnPrivateMessage(func(message twitch.PrivateMessage) {
-		exp := "(點:|點：).*"
+		exp := "^(點:|點：).*"
 		r, _ := regexp.Compile(exp)
 		m := r.FindStringSubmatch(message.Message)
 		if len(m) == 0 || len(m) > 2 {
@@ -50,6 +59,7 @@ func main() {
 		lg.Println(sr)
 		rq := SRBody{
 			Name: sr,
+			Bot:  true,
 		}
 		bt, err := json.Marshal(rq)
 		if err != nil {
