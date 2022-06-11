@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -70,6 +71,7 @@ func main() {
 			lg.Println("failed")
 		} else {
 			lg.Println("success")
+			client.Say(message.Channel, fmt.Sprintf("%s 成功點了%s", message.User.DisplayName, sr))
 		}
 	})
 
